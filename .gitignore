@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment and secrets
+.env
+*.env
+.env.local
+.env.*.local
+backend/.env
+
+# Python
+__pycache__/
+*/__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+
+# Build artifacts
+dist/
+frontend/dist/
+.vite/
+.vite-temp/
+*/.vite/
+*/.vite-temp/
+
+# Editor / System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
