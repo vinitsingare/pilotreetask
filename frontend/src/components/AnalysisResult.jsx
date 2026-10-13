@@ -251,9 +251,19 @@ function AnalysisResult({ analysis, enquiry, apiBase }) {
           <form onSubmit={handleSendEmail} className="email-form">
             {/* Recipient */}
             <div className="email-form-group">
-              <label htmlFor="toEmail">
-                To whom I have to send <span className="req">*</span>
-              </label>
+              <div className="email-label-row">
+                <label htmlFor="toEmail">
+                  To whom I have to send <span className="req">*</span>
+                </label>
+                <button
+                  type="button"
+                  className="quick-test-btn"
+                  onClick={() => setToEmail('vinitsingaredev@gmail.com')}
+                  title="Fill your registered Resend test email address"
+                >
+                  💡 Test with my email (vinitsingaredev@gmail.com)
+                </button>
+              </div>
               <input
                 id="toEmail"
                 type="text"

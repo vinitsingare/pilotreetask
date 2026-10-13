@@ -192,7 +192,7 @@ def send_email(req: SendEmailRequest):
     """Send an email using Resend, SMTP, or simulated delivery."""
     load_dotenv(override=True)
     resend_api_key = os.getenv("RESEND_API_KEY", "").strip()
-    from_email = os.getenv("EMAIL_FROM", "support@pilotree.com").strip()
+    from_email = os.getenv("EMAIL_FROM", "onboarding@resend.dev").strip()
 
     recipient = req.to_email.strip()
     if not recipient or "@" not in recipient:
@@ -225,9 +225,15 @@ def send_email(req: SendEmailRequest):
             delivery_provider = "resend"
             details = "Delivered live via Resend API"
         except Exception as e:
+            err_str = str(e)
+            if "You can only send testing emails to your own email address" in err_str:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Resend Testing Restriction: Resend's free sandbox only permits sending to your registered account email (vinitsingaredev@gmail.com). To test live delivery, set 'To' to vinitsingaredev@gmail.com, or verify a custom domain at resend.com/domains.",
+                )
             raise HTTPException(
                 status_code=500,
-                detail=f"Resend delivery failed: {str(e)}",
+                detail=f"Resend delivery failed: {err_str}",
             )
     # 2. SMTP if configured
     elif os.getenv("SMTP_HOST"):
