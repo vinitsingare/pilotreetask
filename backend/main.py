@@ -214,26 +214,49 @@ def send_email(req: SendEmailRequest):
         try:
             import resend
             resend.api_key = resend_api_key
-            res = resend.Emails.send({
-                "from": from_email,
-                "to": [recipient],
-                "subject": req.subject,
-                "text": req.body,
-            })
-            if isinstance(res, dict) and "id" in res:
-                message_id = res["id"]
-            delivery_provider = "resend"
-            details = "Delivered live via Resend API"
+            try:
+                res = resend.Emails.send({
+                    "from": from_email,
+                    "to": [recipient],
+                    "subject": req.subject,
+                    "text": req.body,
+                })
+                if isinstance(res, dict) and "id" in res:
+                    message_id = res["id"]
+                delivery_provider = "resend"
+                details = f"Delivered live to {recipient} via Resend API"
+            except Exception as direct_err:
+                err_str = str(direct_err)
+                if "You can only send testing emails to your own email address" in err_str:
+                    sandbox_email = "vinitsingaredev@gmail.com"
+                    if "(" in err_str and ")" in err_str:
+                        sandbox_email = err_str.split("(")[1].split(")")[0].strip()
+
+                    forward_subject = f"[Sandbox Demo for: {recipient}] {req.subject}"
+                    forward_body = (
+                        f"--- Resend Sandbox Delivery Notice ---\n"
+                        f"Original Target: {recipient}\n"
+                        f"Enquiry ID: {req.enquiry_id or 'N/A'}\n"
+                        f"Delivered to your test inbox ({sandbox_email}) because Resend free tier restricts external domains until verified.\n"
+                        f"-----------------------------------------\n\n"
+                        f"{req.body}"
+                    )
+                    res = resend.Emails.send({
+                        "from": from_email,
+                        "to": [sandbox_email],
+                        "subject": forward_subject,
+                        "text": forward_body,
+                    })
+                    if isinstance(res, dict) and "id" in res:
+                        message_id = res["id"]
+                    delivery_provider = "resend"
+                    details = f"Delivered live to your test inbox ({sandbox_email}) on behalf of {recipient} (Resend sandbox mode)"
+                else:
+                    raise direct_err
         except Exception as e:
-            err_str = str(e)
-            if "You can only send testing emails to your own email address" in err_str:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Resend Testing Restriction: Resend's free sandbox only permits sending to your registered account email (vinitsingaredev@gmail.com). To test live delivery, set 'To' to vinitsingaredev@gmail.com, or verify a custom domain at resend.com/domains.",
-                )
             raise HTTPException(
                 status_code=500,
-                detail=f"Resend delivery failed: {err_str}",
+                detail=f"Resend delivery failed: {str(e)}",
             )
     # 2. SMTP if configured
     elif os.getenv("SMTP_HOST"):
